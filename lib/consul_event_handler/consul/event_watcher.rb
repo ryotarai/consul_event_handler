@@ -8,9 +8,8 @@ require 'consul_event_handler/consul/event'
 module ConsulEventHandler
   module Consul
     class EventWatcher
-      def initialize(url, name, index_file)
+      def initialize(url, index_file)
         @url = url
-        @name = name
         @index_file = Pathname.new(index_file)
       end
 
@@ -28,17 +27,16 @@ module ConsulEventHandler
 
         while true
           begin
-            Itamae::Client.logger.debug "waiting for a new event"
+            ConsulEventHandler.logger.debug "waiting for a new event"
             res = conn.get do |req|
               req.url "/v1/event/list"
-              req.params['name'] = @name
               req.params['index'] = @index_file.read
               req.options.timeout = 60 * 10 # 10 min
             end
           rescue Faraday::TimeoutError
             retry
           rescue Faraday::ConnectionFailed
-            Itamae::Client.logger.warn "connection to Consul failed. will retry after 60 sec"
+            ConsulEventHandler.logger.warn "connection to Consul failed. will retry after 60 sec"
             sleep 60
             retry
           end
@@ -49,9 +47,14 @@ module ConsulEventHandler
             event_hash = JSON.parse(res.body).last
             next unless event_hash
 
-            Itamae::Client.logger.info "new event: #{event_hash["ID"]}"
+            ConsulEventHandler.logger.info "new event: #{event_hash["ID"]}"
             event = Event.new.tap do |e|
-              e.payload = Base64.decode64(event_hash.fetch('Payload'))
+              e.name = event_hash.fetch('Name')
+
+              payload = event_hash.fetch('Payload')
+              if payload
+                e.payload = Base64.decode64(payload)
+              end
             end
 
             yield(event)

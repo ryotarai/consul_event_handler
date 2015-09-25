@@ -1,0 +1,3 @@
+#!/usr/bin/env ruby
+require 'consul_event_handler'
+ConsulEventHandler::CLI.start

@@ -11,7 +11,7 @@ module ConsulEventHandler
       def with_lock(timeout_sec = 24 * 60 * 60)
         # TODO: Reimplement with Consul HTTP API
         args = ["consul", "lock", "-n", @limit.to_s, @prefix, "echo START; sleep #{timeout_sec + 60}"]
-        Itamae::Client.logger.debug args.shelljoin
+        ConsulEventHandler.debug args.shelljoin
         Open3.popen3(*args) do |stdin, stdout, stderr, wait_thr|
           begin
             line = stdout.readline

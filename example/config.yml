@@ -1,0 +1,7 @@
+events:
+  say-hello:
+    command: ["echo", "Hello"]
+consul_index_file: /tmp/consul.index
+secrets:
+  - foobar
+  - barbaz
